@@ -1,3 +1,4 @@
+import os
 import sys
 import argparse
 import numpy as np
@@ -58,6 +59,24 @@ def loss(h, y):
    return ce/y.shape[0]
 
 
+def score(y, y_p):
+    y = y.reshape (y.shape[0])
+    y = np.array([int(t) for t in y])
+
+    TP, FP, TN, FN = 0,0,0,0
+    for i in range (0, y.shape[0]):
+       if y[i] == 1:
+           if y_p[i] == 1:
+             TP +=1
+           else:
+             FN +=1
+       else :
+           if y_p [i] == 1:
+             FP +=1
+           else:
+             TN +=1     
+    return {'TP':TP,'TN':TN,'FP':FP,'FN':FN} 
+
 
 # This is the main class 
 
@@ -84,32 +103,14 @@ class LogReg:
          for i in range(0, x.shape[0])])
       return h  
 
+   def predict_class (self, x, p_cut):
+      h = self.predict (x)
+      y = [0 if p < p_cut else 1 for p in h]
+      return np.array(y)
 
-# Main calling program 
 
-if __name__ == "__main__":
+def plot_data(df, model, outdir):
     
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-n', '--num-iter', help='Number of iterations', required=True)
-    parser.add_argument('-lr', '--learning-rate', help='Learning Rate', required=True)
-    args = parser.parse_args()
-
-    # Read the parameters  
-    niter = int (args.num_iter)
-    learning_rate = float (args.learning_rate)
-
-    # get the data 
-    df = get_data ()
-
-    # convert data to numpy arrays
-    X, y = df2np (df)
-
-    # This is the model object 
-    model = LogReg (X.shape[1], niter, learning_rate)
-
-    # Fit the data 
-    model.fit(X, y)
-
     # separate the input data on the basis of class
     # for the purpose of plotting 
     df1 = df[df['gender'] == 0.0]
@@ -122,15 +123,14 @@ if __name__ == "__main__":
     plt.scatter(x_f[:,1],x_f[:,2])
     plt.scatter(x_m[:,1],x_m[:,2])
     plt.xlabel('weight in kg')
-    plt.xlabel('height in inch')
-    plt.savefig("gender_input.pdf")
+    plt.ylabel('height in inch')
+    plt.savefig(outdir + os.sep + "gender_input.pdf")
 
     # now make the predictions  
     # (for the training data itself)
 
     h_f =  model.predict (x_f)
     h_m =  model.predict (x_m)
-
 
     # now plot the actual class label for one
     # of the features  
@@ -148,5 +148,70 @@ if __name__ == "__main__":
     ax2.plot(x_m[:,1], h_m,'o')
     ax2.set_xlabel('weight in kg')
     ax2.set_ylabel('P(x)')
-    fig.savefig("gender_output.pdf")
+    fig.savefig(outdir + os.sep + "gender_output.pdf")
+    plt.clf()
+
+def plot_roc(X, model, outdir):
+    p  =  np.arange(0.1,0.9,0.01)
+
+    df_roc = pd.DataFrame (columns=["threshold","true_positive",\
+       "false_positive","true_negative","false_negative"])
+
+    count = 0
+    tp = []
+    fp = []
+    for p_cut in p:
+       y_p  = model.predict_class (X, p_cut=p_cut)
+       sc = score (y, y_p)
+       t = "{:10.2f}".format(p_cut)
+       df_roc.loc[count] = [t, sc['TP'], sc['FP'], sc['TN'],sc['FN']]
+       tp.append (sc['TP'])
+       fp.append (sc['FP'])
+       count +=1
+
+       print(p_cut, sc)
+
+    df_roc.to_csv("output/roc.csv")
+    plt.plot(fp, tp)
+    plt.title("Receiver Operating Characterstic (ROC)")
+    plt.xlabel("False Positive (TP)")
+    plt.ylabel("True Positive (FP)")
+    plt.savefig(outdir + os.sep + "roc.pdf")
+    
+
+# Main calling program 
+
+if __name__ == "__main__":
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-n', '--num-iter', help='Number of iterations', required=True)
+    parser.add_argument('-lr', '--learning-rate', help='Learning Rate', required=True)
+    parser.add_argument('-o', '--output-dir', help='Output dir', required=True)
+    args = parser.parse_args()
+
+    # Read the parameters  
+    niter = int (args.num_iter)
+    learning_rate = float (args.learning_rate)
+
+    # create output directory if does not exist 
+    outdir = args.output_dir
+    os.makedirs(outdir, exist_ok=True)
+
+    # get the data 
+    df = get_data ()
+
+    df.to_csv(outdir + os.sep + "gender.csv")
+
+    # convert data to numpy arrays
+    X, y = df2np (df)
+
+    # This is the model object 
+    model = LogReg (X.shape[1], niter, learning_rate)
+
+    # Fit the data 
+    model.fit(X, y)
+ 
+    plot_data (df, model, outdir)
+
+    plot_roc (X, model, outdir)
 
