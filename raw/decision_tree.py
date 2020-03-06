@@ -4,9 +4,9 @@ import numpy as np
 This program implements a decision tree algorithm from scratch 
 using only numpy.
 
-The data uses is also created here, basically we create a data set 
+The data used is also created here, basically we create a data set 
 with 100 rows and 5 columns. The values for the first four columns (features)
-are drawn from a uniform random gnerator.
+are drawn from a uniform random generator.
 In order to get the target columns we do the following:
 - add the values of all the features and call that y0
 - now compute the mean of y0
@@ -18,6 +18,7 @@ This is only a wireframe model and for the actual case we need to add
 a lot of meat.
 
 For comments & suggestions : prasad.jayanti@gmail.com 
+- Jayanti Prasad Ph.D
 
 """
 

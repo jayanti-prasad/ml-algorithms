@@ -1,0 +1,17 @@
+This program implements a decision tree algorithm from scratch 
+using only numpy.
+
+The data used is also created here, basically we create a data set 
+with 100 rows and 5 columns. The values for the first four columns (features)
+are drawn from a uniform random generator.
+In order to get the target columns we do the following:
+- add the values of all the features and call that y0
+- now compute the mean of y0
+- for all the rows if y0 < mean set y = 0 else y = 1
+There is nothing special about this data. Once can create or use
+any data the only condition is that the target column should be only 0 and 1 
+
+This is only a wire frame model and for the actual case we need to add 
+a lot of meat.
+
+For comments & suggestions : prasad.jayanti@gmail.co
