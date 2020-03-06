@@ -171,7 +171,7 @@ def plot_roc(X, model, outdir):
 
        print(p_cut, sc)
 
-    df_roc.to_csv("output/roc.csv")
+    df_roc.to_csv(outdir + os.sep + "roc.csv")
     plt.plot(fp, tp)
     plt.title("Receiver Operating Characterstic (ROC)")
     plt.xlabel("False Positive (TP)")
